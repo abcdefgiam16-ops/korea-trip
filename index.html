@@ -335,7 +335,7 @@ function loadState(){
 function saveState(){
   if(!state.sections) state.sections = defaultSections();
   try{ localStorage.setItem('korea_trip_v3', JSON.stringify(state)); }catch(e){}
-  if(fbTripRef){ state._client = CLIENT_ID; fbTripRef.set(state); }
+  if(fbTripRef){ state._client = CLIENT_ID; fbTripRef.set({json: JSON.stringify(state)}); }
 }
 
 function getSections(id){
@@ -621,38 +621,15 @@ render();
       messagingSenderId: "342400103039",
       appId: "1:342400103039:web:49a8bd7688bc1f5827c54a"
     });
-    fbTripRef = firebase.database().ref('trip');
-
-    function fixArrays(data){
-      if(!data) return data;
-      // Firebase 會刪掉空物件，讀回來是 null → 補回空物件
-      data.done  = data.done  || {};
-      data.notes = data.notes || {};
-      data.titles = data.titles || {};
-      data.subs  = data.subs  || {};
-      data.open  = data.open  || {};
-      // Firebase 會把陣列轉成 {0:…,1:…} 物件，這裡轉回來
-      if(data.order && !Array.isArray(data.order))
-        data.order = Object.values(data.order);
-      if(data.sections){
-        Object.keys(data.sections).forEach(dayId => {
-          let secs = data.sections[dayId];
-          if(secs && !Array.isArray(secs))
-            secs = data.sections[dayId] = Object.values(secs);
-          if(Array.isArray(secs))
-            secs.forEach(sec => {
-              if(sec && sec.spots && !Array.isArray(sec.spots))
-                sec.spots = Object.values(sec.spots);
-            });
-        });
-      }
-      return data;
-    }
+    // 把 state 存成 JSON 字串，避免 Firebase 破壞陣列和空物件結構
+    fbTripRef = firebase.database().ref('trip_json');
 
     fbTripRef.on('value', snapshot => {
-      const data = fixArrays(snapshot.val());
-      if(!data){ saveState(); return; }
-      if(data._client === CLIENT_ID) return;
+      const raw = snapshot.val();
+      if(!raw || !raw.json){ saveState(); return; }
+      let data;
+      try{ data = JSON.parse(raw.json); }catch(e){ return; }
+      if(!data || data._client === CLIENT_ID) return;
       state = data;
       const active = document.activeElement;
       if(active && (active.tagName==='TEXTAREA' || active.tagName==='INPUT')){
