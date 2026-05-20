@@ -389,6 +389,12 @@ function render(){
       sectionsHTML += `<div class="sec-label">${escHtml(sec.label)}</div><div class="spots" id="spots-${sid}">${spotsHTML}</div>`;
       sectionsHTML += `<div class="add-spot-row">
         <input class="add-input" placeholder="新增景點…" id="add-input-${sid}" onkeydown="if(event.key==='Enter'){event.preventDefault();addSpot('${id}',${si})}">
+        <select class="cat-sel" id="add-type-${sid}">
+          <option value="shop"${sec.type==='shop'?' selected':''}>逛街</option>
+          <option value="food"${sec.type==='food'?' selected':''}>吃的</option>
+          <option value="play"${sec.type==='play'?' selected':''}>玩的</option>
+          <option value="sight"${sec.type==='sight'?' selected':''}>景點</option>
+        </select>
         <button class="add-btn" onclick="addSpot('${id}',${si})"><i class="ti ti-plus"></i> 新增</button>
       </div>`;
     });
@@ -521,9 +527,24 @@ function updateProgress(){
 function addSpot(dayId, si){
   const sid = `${dayId}-${si}`;
   const input = document.getElementById(`add-input-${sid}`);
+  const typeEl = document.getElementById(`add-type-${sid}`);
   const val = input ? input.value.trim() : '';
   if(!val) return;
-  getSections(dayId)[si].spots.push(val);
+  const sections = getSections(dayId);
+  const selectedType = typeEl ? typeEl.value : sections[si].type;
+  let targetSi = sections.findIndex(s => s.type === selectedType);
+  if(targetSi < 0){
+    const META = {
+      shop:{label:'逛街',icon:'ti-shopping-bag'},
+      food:{label:'吃的',icon:'ti-bowl-chopsticks'},
+      play:{label:'玩的',icon:'ti-confetti'},
+      sight:{label:'景點',icon:'ti-building-arch'}
+    };
+    const m = META[selectedType];
+    sections.push({label:m.label, type:selectedType, icon:m.icon, spots:[]});
+    targetSi = sections.length - 1;
+  }
+  sections[targetSi].spots.push(val);
   input.value='';
   state.open[dayId]=true;
   saveState(); render();
