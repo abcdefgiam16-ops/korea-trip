@@ -9,22 +9,33 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;}
   a{color:inherit;text-decoration:none;}
+
+  /* header */
   .header{background:#fff;border-bottom:1px solid #e8e6e0;padding:18px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .header-title{font-size:18px;font-weight:600;flex:1;}
   .header-meta{font-size:13px;color:#888;display:flex;gap:16px;flex-wrap:wrap;}
   .header-meta span{display:flex;align-items:center;gap:4px;}
+
+  /* layout */
   .main{max-width:900px;margin:0 auto;padding:20px 16px 60px;}
+
+  /* info bar */
   .info-bar{background:#EEEDFE;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:14px;color:#3C3489;}
   .info-bar i{font-size:18px;flex-shrink:0;}
+
+  /* legend */
   .legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
   .leg-item{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border-radius:20px;}
   .leg-shop{background:#EEEDFE;color:#3C3489;}
   .leg-food{background:#FAEEDA;color:#633806;}
   .leg-play{background:#E1F5EE;color:#085041;}
   .leg-sight{background:#FAECE7;color:#712B13;}
+
+  /* day card */
   .day-card{background:#fff;border:1px solid #e8e6e0;border-radius:12px;margin-bottom:12px;overflow:hidden;transition:box-shadow .15s;}
   .day-card.dragging{opacity:.5;}
   .day-card.drag-over{border:2px dashed #7F77DD;}
+
   .day-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none;}
   .day-header:hover{background:#fafaf8;}
   .drag-handle{color:#ccc;cursor:grab;font-size:18px;flex-shrink:0;}
@@ -35,10 +46,15 @@
   .day-sub{font-size:12px;color:#888;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .day-chevron{font-size:16px;color:#bbb;transition:transform .2s;flex-shrink:0;}
   .day-chevron.open{transform:rotate(180deg);}
+
+  /* day body */
   .day-body{display:none;padding:0 16px 16px;}
   .day-body.open{display:block;}
+
   .sec-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#aaa;margin:14px 0 8px;}
   .spots{display:flex;flex-wrap:wrap;gap:6px;}
+
+  /* spot chip */
   .spot{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:5px 11px;border-radius:20px;cursor:pointer;transition:opacity .15s;border:1.5px solid transparent;user-select:none;}
   .spot.done{opacity:.35;text-decoration:line-through;}
   .spot i{font-size:14px;}
@@ -46,15 +62,23 @@
   .spot-food{background:#FAEEDA;color:#633806;border-color:#FAC775;}
   .spot-play{background:#E1F5EE;color:#085041;border-color:#9FE1CB;}
   .spot-sight{background:#FAECE7;color:#712B13;border-color:#F5C4B3;}
+
+  /* note */
   .note-row{margin-top:14px;display:flex;gap:8px;align-items:flex-start;}
   .note-row i{font-size:15px;color:#aaa;margin-top:9px;flex-shrink:0;}
   .note-input{flex:1;border:1px solid #e8e6e0;border-radius:8px;padding:8px 10px;font-size:13px;color:#1a1a1a;resize:none;font-family:inherit;background:#fafaf8;line-height:1.5;min-height:36px;}
   .note-input:focus{outline:none;border-color:#7F77DD;background:#fff;}
   .note-input::placeholder{color:#bbb;}
+
+  /* tip */
   .tip-box{margin-top:12px;font-size:12px;color:#888;background:#fafaf8;border-radius:8px;padding:9px 12px;display:flex;gap:7px;align-items:flex-start;}
   .tip-box i{font-size:14px;flex-shrink:0;margin-top:1px;}
+
+  /* warn */
   .warn-box{margin-top:10px;font-size:12px;color:#791F1F;background:#FCEBEB;border-radius:8px;padding:9px 12px;display:flex;gap:7px;align-items:flex-start;}
   .warn-box i{font-size:14px;flex-shrink:0;margin-top:1px;}
+
+  /* spot action buttons */
   .spot-wrap{position:relative;display:inline-flex;align-items:center;gap:2px;}
   .spot-actions{display:none;align-items:center;gap:1px;}
   .spot-wrap:hover .spot-actions{display:inline-flex;}
@@ -62,6 +86,8 @@
   .spot-act-btn:hover{background:#f0eeee;color:#555;}
   .spot-act-btn.del:hover{background:#FCEBEB;color:#791F1F;}
   @media(hover:none){.spot-actions{display:inline-flex;}}
+
+  /* add-spot */
   .add-spot-row{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
   .add-input{border:1px solid #e8e6e0;border-radius:8px;padding:6px 10px;font-size:13px;color:#1a1a1a;background:#fafaf8;font-family:inherit;width:160px;}
   .add-input:focus{outline:none;border-color:#7F77DD;background:#fff;}
@@ -69,15 +95,21 @@
   .cat-sel:focus{outline:none;border-color:#7F77DD;}
   .add-btn{border:1px solid #e8e6e0;border-radius:8px;padding:6px 12px;font-size:13px;background:#fff;cursor:pointer;color:#555;display:flex;align-items:center;gap:4px;}
   .add-btn:hover{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC;}
+
+  /* toolbar */
   .toolbar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
   .tool-btn{border:1px solid #e8e6e0;border-radius:8px;padding:7px 14px;font-size:13px;background:#fff;cursor:pointer;color:#555;display:flex;align-items:center;gap:6px;}
   .tool-btn:hover{background:#f5f4f0;}
   .tool-btn.primary{background:#534AB7;color:#fff;border-color:#534AB7;}
   .tool-btn.primary:hover{background:#3C3489;}
+
+  /* progress */
   .progress-row{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
   .progress-bar{flex:1;height:6px;background:#e8e6e0;border-radius:3px;overflow:hidden;}
   .progress-fill{height:100%;background:#534AB7;border-radius:3px;transition:width .3s;}
   .progress-label{font-size:12px;color:#888;white-space:nowrap;}
+
+  /* modal */
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center;}
   .modal-bg.show{display:flex;}
   .modal{background:#fff;border-radius:14px;padding:24px;max-width:440px;width:90%;max-height:80vh;overflow-y:auto;}
@@ -89,15 +121,27 @@
   .modal-actions button{border:1px solid #e8e6e0;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;background:#fff;color:#555;}
   .modal-actions .ok-btn{background:#534AB7;color:#fff;border-color:#534AB7;}
   .modal-actions .ok-btn:hover{background:#3C3489;}
+
+  /* copy toast */
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:200;}
   .toast.show{opacity:1;}
+
   @media(max-width:600px){
-    .day-title{font-size:14px;} .day-sub{font-size:11px;} .header{padding:12px 14px;}
-    .header-title{font-size:16px;} .header-meta{font-size:12px;gap:10px;}
-    .main{padding:14px 12px 60px;} .toolbar{gap:6px;} .tool-btn{padding:6px 10px;font-size:12px;}
-    .spot{font-size:12px;padding:4px 9px;} .add-input{width:130px;font-size:12px;}
-    .add-btn{font-size:12px;padding:5px 10px;} .info-bar{font-size:13px;}
-    .modal{padding:18px;} .modal textarea{font-size:14px;} .modal-actions button{padding:10px 16px;font-size:14px;}
+    .day-title{font-size:14px;}
+    .day-sub{font-size:11px;}
+    .header{padding:12px 14px;}
+    .header-title{font-size:16px;}
+    .header-meta{font-size:12px;gap:10px;}
+    .main{padding:14px 12px 60px;}
+    .toolbar{gap:6px;}
+    .tool-btn{padding:6px 10px;font-size:12px;}
+    .spot{font-size:12px;padding:4px 9px;}
+    .add-input{width:130px;font-size:12px;}
+    .add-btn{font-size:12px;padding:5px 10px;}
+    .info-bar{font-size:13px;}
+    .modal{padding:18px;}
+    .modal textarea{font-size:14px;}
+    .modal-actions button{padding:10px 16px;font-size:14px;}
   }
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -120,25 +164,30 @@
     <i class="ti ti-info-circle" aria-hidden="true"></i>
     <span>點擊景點可標記已完成・可新增備注・拖曳卡片調整天數順序</span>
   </div>
+
   <div class="legend">
     <span class="leg-item leg-shop"><i class="ti ti-shopping-bag"></i>逛街</span>
     <span class="leg-item leg-food"><i class="ti ti-bowl-chopsticks"></i>吃的</span>
     <span class="leg-item leg-play"><i class="ti ti-confetti"></i>玩的</span>
     <span class="leg-item leg-sight"><i class="ti ti-building-arch"></i>景點</span>
   </div>
+
   <div class="progress-row">
     <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
     <div class="progress-label" id="progress-label">0 / 0 個景點</div>
   </div>
+
   <div class="toolbar">
     <button class="tool-btn" onclick="expandAll()"><i class="ti ti-chevrons-down"></i> 展開全部</button>
     <button class="tool-btn" onclick="collapseAll()"><i class="ti ti-chevrons-up"></i> 收合全部</button>
     <button class="tool-btn" onclick="resetDone()"><i class="ti ti-refresh"></i> 重置勾選</button>
     <button class="tool-btn primary" onclick="copyText()"><i class="ti ti-copy"></i> 複製純文字版</button>
   </div>
+
   <div id="days-container"></div>
 </div>
 
+<!-- modal -->
 <div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
   <div class="modal">
     <h3 id="modal-title">編輯行程標題</h3>
@@ -150,14 +199,14 @@
     </div>
   </div>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ── 全域變數 ──────────────────────────────────────────────────────────────
 const CLIENT_ID = Date.now().toString(36) + Math.random().toString(36).slice(2);
 let pendingRemoteUpdate = false;
 let noteSaveTimer = null;
-let fbTripRef = null; // Firebase ref，初始化成功後才設定
+let fbTripRef = null;
 
 const DAYS_DATA = [
   {
@@ -248,38 +297,45 @@ const DAYS_DATA = [
   }
 ];
 
-let state = loadCachedState();
+let state = loadState();
 let dragSrc = null;
 let modalMode = null;
 let modalTarget = null;
 let editSpotTarget = null;
 
-// ── 核心函式 ──────────────────────────────────────────────────────────────
 function defaultSections(){
   const out = {};
   DAYS_DATA.forEach(d=>{
     out[d.id] = d.sections.map(sec=>({
-      label: sec.label, type: sec.type, icon: sec.icon, spots: [...sec.spots]
+      label: sec.label,
+      type: sec.type,
+      icon: sec.icon,
+      spots: [...sec.spots]
     }));
   });
   return out;
 }
 
-function loadCachedState(){
+function loadState(){
   try{
     const s = localStorage.getItem('korea_trip_v3');
     if(s){ return JSON.parse(s); }
   }catch(e){}
-  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, open:{} };
+  return {
+    order: DAYS_DATA.map(d=>d.id),
+    sections: defaultSections(),
+    done: {},
+    notes: {},
+    titles: {},
+    subs: {},
+    open: {}
+  };
 }
 
 function saveState(){
   if(!state.sections) state.sections = defaultSections();
   try{ localStorage.setItem('korea_trip_v3', JSON.stringify(state)); }catch(e){}
-  if(fbTripRef){
-    state._client = CLIENT_ID;
-    fbTripRef.set(state);
-  }
+  if(fbTripRef){ state._client = CLIENT_ID; fbTripRef.set(state); }
 }
 
 function getSections(id){
@@ -292,7 +348,9 @@ function getSections(id){
 }
 
 function getData(id){ return DAYS_DATA.find(d=>d.id===id); }
+
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
 
 function render(){
   const container = document.getElementById('days-container');
@@ -306,10 +364,12 @@ function render(){
     const sub = state.subs[id] || d.sub;
     const note = state.notes[id] || '';
     const sections = getSections(id);
+
     const card = document.createElement('div');
     card.className = 'day-card';
     card.dataset.id = id;
     card.draggable = true;
+
     let sectionsHTML = '';
     sections.forEach((sec, si) => {
       const spotsHTML = sec.spots.map((spot, spi) => {
@@ -332,6 +392,7 @@ function render(){
         <button class="add-btn" onclick="addSpot('${id}',${si})"><i class="ti ti-plus"></i> 新增</button>
       </div>`;
     });
+
     const warnHTML = d.warn ? `<div class="warn-box"><i class="ti ti-alert-triangle"></i><span>${d.warn}</span></div>` : '';
     const tipHTML = `<div class="tip-box"><i class="ti ti-bulb"></i><span>${d.tip}</span></div>`;
     const noteHTML = `<div class="note-row">
@@ -340,6 +401,7 @@ function render(){
         oninput="saveNote('${id}',this.value);autoResize(this)"
         onfocus="autoResize(this)">${escHtml(note)}</textarea>
     </div>`;
+
     card.innerHTML = `
       <div class="day-header" onclick="toggleDay('${id}')">
         <i class="ti ti-grip-vertical drag-handle" aria-hidden="true" onclick="event.stopPropagation()"></i>
@@ -352,25 +414,38 @@ function render(){
         <i class="ti ti-chevron-down day-chevron${isOpen?' open':''}" aria-hidden="true"></i>
       </div>
       <div class="day-body${isOpen?' open':''}">
-        ${warnHTML}${sectionsHTML}${noteHTML}${tipHTML}
-      </div>`;
-    card.addEventListener('dragstart', e => { dragSrc=id; setTimeout(()=>card.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move'; });
+        ${warnHTML}
+        ${sectionsHTML}
+        ${noteHTML}
+        ${tipHTML}
+      </div>
+    `;
+
+    card.addEventListener('dragstart', e => {
+      dragSrc = id;
+      setTimeout(()=>card.classList.add('dragging'),0);
+      e.dataTransfer.effectAllowed='move';
+    });
     card.addEventListener('dragend', ()=>{ card.classList.remove('dragging'); dragSrc=null; });
     card.addEventListener('dragover', e=>{ e.preventDefault(); card.classList.add('drag-over'); });
     card.addEventListener('dragleave', ()=>card.classList.remove('drag-over'));
     card.addEventListener('drop', e=>{ e.preventDefault(); card.classList.remove('drag-over'); dropOn(id); });
+
     container.appendChild(card);
   });
   updateProgress();
 }
 
-function toggleDay(id){ state.open[id]=!state.open[id]; saveState(); render(); }
+function toggleDay(id){
+  state.open[id] = !state.open[id];
+  saveState(); render();
+}
 function expandAll(){ DAYS_DATA.forEach(d=>state.open[d.id]=true); saveState(); render(); }
 function collapseAll(){ DAYS_DATA.forEach(d=>state.open[d.id]=false); saveState(); render(); }
 
 function toggleSpot(id, si, spi, el){
   const key = id+'::'+si+'::'+spi;
-  state.done[key]=!state.done[key];
+  state.done[key] = !state.done[key];
   el.classList.toggle('done', state.done[key]);
   saveState(); updateProgress();
 }
@@ -380,117 +455,143 @@ function deleteSpot(id, si, spi){
   if(!sec) return;
   const spot = sec.spots[spi];
   if(!confirm(`刪除「${spot}」？`)) return;
-  delete state.done[id+'::'+si+'::'+spi];
+  const key = id+'::'+si+'::'+spi;
+  delete state.done[key];
   sec.spots.splice(spi, 1);
-  state.open[id]=true;
+  state.open[id] = true;
   saveState(); render();
 }
 
 function renameSpot(id, si, spi){
   const sec = getSections(id)[si];
   if(!sec) return;
-  editSpotTarget={id,si,spi}; modalMode='rename';
-  document.getElementById('modal-title').textContent='重新命名景點';
-  document.getElementById('modal-desc').textContent='輸入新的景點名稱';
-  document.getElementById('modal-input').value=sec.spots[spi];
+  const old = sec.spots[spi];
+  editSpotTarget = {id, si, spi};
+  modalMode = 'rename';
+  document.getElementById('modal-title').textContent = '重新命名景點';
+  document.getElementById('modal-desc').textContent = '輸入新的景點名稱';
+  document.getElementById('modal-input').value = old;
   document.getElementById('modal-bg').classList.add('show');
   setTimeout(()=>{ const el=document.getElementById('modal-input'); el.focus(); el.select(); },100);
 }
 
 function saveNote(id, val){
-  state.notes[id]=val;
+  state.notes[id] = val;
   clearTimeout(noteSaveTimer);
-  noteSaveTimer=setTimeout(saveState, 800);
+  noteSaveTimer = setTimeout(saveState, 800);
 }
-function autoResize(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=el.scrollHeight+'px';
+}
 
 function dropOn(targetId){
-  if(!dragSrc||dragSrc===targetId) return;
-  const order=[...state.order];
-  const from=order.indexOf(dragSrc), to=order.indexOf(targetId);
-  order.splice(from,1); order.splice(to,0,dragSrc);
-  state.order=order; saveState(); render();
+  if(!dragSrc || dragSrc===targetId) return;
+  const order = [...state.order];
+  const from = order.indexOf(dragSrc);
+  const to = order.indexOf(targetId);
+  order.splice(from,1);
+  order.splice(to,0,dragSrc);
+  state.order = order;
+  saveState(); render();
 }
 
 function resetDone(){
   if(!confirm('確定要重置所有已勾選的景點嗎？')) return;
-  state.done={}; saveState(); render();
+  state.done={};
+  saveState(); render();
 }
 
 function updateProgress(){
   let total=0, done=0;
-  const order=state.order||DAYS_DATA.map(d=>d.id);
+  const order = state.order || DAYS_DATA.map(d=>d.id);
   order.forEach(id=>{
     getSections(id).forEach((sec,si)=>{
-      sec.spots.forEach((_,spi)=>{ total++; if(state.done[id+'::'+si+'::'+spi]) done++; });
+      sec.spots.forEach((_,spi)=>{
+        total++;
+        if(state.done[id+'::'+si+'::'+spi]) done++;
+      });
     });
   });
-  const pct=total>0?Math.round(done/total*100):0;
+  const pct = total>0?Math.round(done/total*100):0;
   document.getElementById('progress-fill').style.width=pct+'%';
   document.getElementById('progress-label').textContent=`${done} / ${total} 個景點`;
 }
 
 function addSpot(dayId, si){
-  const sid=`${dayId}-${si}`;
-  const input=document.getElementById(`add-input-${sid}`);
-  const val=input?input.value.trim():'';
+  const sid = `${dayId}-${si}`;
+  const input = document.getElementById(`add-input-${sid}`);
+  const val = input ? input.value.trim() : '';
   if(!val) return;
   getSections(dayId)[si].spots.push(val);
-  input.value=''; state.open[dayId]=true;
+  input.value='';
+  state.open[dayId]=true;
   saveState(); render();
 }
 
 function openEditModal(id){
-  const d=getData(id);
+  const d = getData(id);
   modalMode='edit'; modalTarget=id;
   document.getElementById('modal-title').textContent='編輯行程標題';
   document.getElementById('modal-desc').textContent='修改這一天的主題與副標題（用換行分隔）';
-  document.getElementById('modal-input').value=(state.titles[id]||d.title)+'\n'+(state.subs[id]||d.sub);
+  const t = state.titles[id]||d.title;
+  const s = state.subs[id]||d.sub;
+  document.getElementById('modal-input').value=t+'\n'+s;
   document.getElementById('modal-bg').classList.add('show');
 }
 function closeModal(e){ if(e.target===document.getElementById('modal-bg')) closeModalDirect(); }
 function closeModalDirect(){ document.getElementById('modal-bg').classList.remove('show'); modalMode=null; editSpotTarget=null; }
 function saveModal(){
   if(modalMode==='edit'){
-    const lines=document.getElementById('modal-input').value.split('\n');
-    state.titles[modalTarget]=lines[0]||''; state.subs[modalTarget]=lines.slice(1).join(' ')||'';
-    state.open[modalTarget]=true; saveState(); render();
-  } else if(modalMode==='rename'&&editSpotTarget){
-    const {id,si,spi}=editSpotTarget;
-    const val=document.getElementById('modal-input').value.trim();
-    if(val){ getSections(id)[si].spots[spi]=val; state.open[id]=true; saveState(); render(); }
+    const lines = document.getElementById('modal-input').value.split('\n');
+    state.titles[modalTarget] = lines[0]||'';
+    state.subs[modalTarget] = lines.slice(1).join(' ')||'';
+    state.open[modalTarget]=true;
+    saveState(); render();
+  } else if(modalMode==='rename' && editSpotTarget){
+    const {id,si,spi} = editSpotTarget;
+    const val = document.getElementById('modal-input').value.trim();
+    if(val){
+      getSections(id)[si].spots[spi] = val;
+      state.open[id]=true;
+      saveState(); render();
+    }
   }
   closeModalDirect();
 }
 
 function copyText(){
-  const order=state.order||DAYS_DATA.map(d=>d.id);
-  let out='🇰🇷 韓國 7 天 6 夜行程\n住宿：ITDA（弘大）\n\n';
+  const order = state.order || DAYS_DATA.map(d=>d.id);
+  let out = '🇰🇷 韓國 7 天 6 夜行程\n住宿：ITDA（弘大）\n\n';
   order.forEach((id,idx)=>{
-    const d=getData(id);
-    out+=`【D${idx+1} ${state.titles[id]||d.title}】\n${state.subs[id]||d.sub}\n`;
-    getSections(id).forEach(sec=>{ if(sec.spots.length) out+=`▸ ${sec.label}：${sec.spots.join('、')}\n`; });
-    if(state.notes[id]) out+=`📝 ${state.notes[id]}\n`;
-    out+='\n';
+    const d = getData(id);
+    const title = state.titles[id]||d.title;
+    const sub = state.subs[id]||d.sub;
+    out += `【D${idx+1} ${title}】\n${sub}\n`;
+    getSections(id).forEach(sec=>{
+      if(sec.spots.length) out += `▸ ${sec.label}：${sec.spots.join('、')}\n`;
+    });
+    const note = state.notes[id];
+    if(note) out += `📝 ${note}\n`;
+    out += '\n';
   });
   navigator.clipboard.writeText(out).then(()=>showToast('已複製純文字版！'));
 }
 
 function showToast(msg){
-  const t=document.getElementById('toast');
+  const t = document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 
-// ── 初始 render（不依賴 Firebase）─────────────────────────────────────────
-if(!state.order){ state.order=DAYS_DATA.map(d=>d.id); }
-if(!state.sections){ state.sections=defaultSections(); }
+if(!state.order){ state.order = DAYS_DATA.map(d=>d.id); }
+if(!state.sections){ state.sections = defaultSections(); }
 render();
 
-// ── Firebase 即時同步（非阻塞，失敗不影響頁面）───────────────────────────
-(function initFirebase(){
-  try {
-    const firebaseConfig = {
+// Firebase 即時同步（非阻塞，失敗不影響頁面）
+(function(){
+  try{
+    firebase.initializeApp({
       apiKey: "AIzaSyDcooOgQg7PNAKBV1K1RvpQkz64W9ihCdI",
       authDomain: "korea-8e55e.firebaseapp.com",
       databaseURL: "https://korea-8e55e-default-rtdb.firebaseio.com",
@@ -498,49 +599,35 @@ render();
       storageBucket: "korea-8e55e.firebasestorage.app",
       messagingSenderId: "342400103039",
       appId: "1:342400103039:web:49a8bd7688bc1f5827c54a"
-    };
-    firebase.initializeApp(firebaseConfig);
+    });
     fbTripRef = firebase.database().ref('trip');
 
     fbTripRef.on('value', snapshot => {
       const data = snapshot.val();
-      if(!data){
-        if(!state.sections) state.sections = defaultSections();
-        saveState();
-        return;
-      }
+      if(!data){ saveState(); return; }
       if(data._client === CLIENT_ID) return;
       state = data;
       const active = document.activeElement;
       if(active && (active.tagName==='TEXTAREA' || active.tagName==='INPUT')){
         pendingRemoteUpdate = true;
-      } else {
-        render();
-      }
+      } else { render(); }
     });
 
     document.addEventListener('blur', e => {
       if(pendingRemoteUpdate && (e.target.tagName==='TEXTAREA' || e.target.tagName==='INPUT')){
-        pendingRemoteUpdate = false;
-        setTimeout(render, 50);
+        pendingRemoteUpdate = false; setTimeout(render, 50);
       }
     }, true);
 
     firebase.database().ref('.info/connected').on('value', snap => {
       const el = document.getElementById('sync-status');
       if(!el) return;
-      if(snap.val()){
-        el.innerHTML = '<i class="ti ti-cloud-check" aria-hidden="true"></i> 已連線';
-        el.style.color = '#0F6E56';
-      } else {
-        el.innerHTML = '<i class="ti ti-cloud-off" aria-hidden="true"></i> 離線';
-        el.style.color = '#999';
-      }
+      if(snap.val()){ el.innerHTML='<i class="ti ti-cloud-check"></i> 已連線'; el.style.color='#0F6E56'; }
+      else { el.innerHTML='<i class="ti ti-cloud-off"></i> 離線'; el.style.color='#999'; }
     });
-  } catch(e) {
-    console.warn('Firebase sync unavailable:', e);
+  } catch(e){
     const el = document.getElementById('sync-status');
-    if(el){ el.innerHTML = '<i class="ti ti-cloud-off" aria-hidden="true"></i> 僅本機'; el.style.color = '#999'; }
+    if(el){ el.innerHTML='<i class="ti ti-cloud-off"></i> 僅本機'; el.style.color='#999'; }
   }
 })();
 </script>
