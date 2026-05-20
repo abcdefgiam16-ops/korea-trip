@@ -624,8 +624,14 @@ render();
     fbTripRef = firebase.database().ref('trip');
 
     function fixArrays(data){
-      // Firebase 會把陣列轉成 {0:…,1:…} 物件，這裡轉回來
       if(!data) return data;
+      // Firebase 會刪掉空物件，讀回來是 null → 補回空物件
+      data.done  = data.done  || {};
+      data.notes = data.notes || {};
+      data.titles = data.titles || {};
+      data.subs  = data.subs  || {};
+      data.open  = data.open  || {};
+      // Firebase 會把陣列轉成 {0:…,1:…} 物件，這裡轉回來
       if(data.order && !Array.isArray(data.order))
         data.order = Object.values(data.order);
       if(data.sections){
