@@ -316,20 +316,22 @@ function defaultSections(){
   return out;
 }
 
+function defaultState(){
+  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, open:{} };
+}
+
 function loadState(){
   try{
     const s = localStorage.getItem('korea_trip_v3');
-    if(s){ return JSON.parse(s); }
+    if(s){
+      const d = JSON.parse(s);
+      // 驗證：order 必須是含有效 ID 的陣列
+      if(d && Array.isArray(d.order) && d.order.length > 0 && d.order.every(id => DAYS_DATA.some(x=>x.id===id)))
+        return d;
+    }
   }catch(e){}
-  return {
-    order: DAYS_DATA.map(d=>d.id),
-    sections: defaultSections(),
-    done: {},
-    notes: {},
-    titles: {},
-    subs: {},
-    open: {}
-  };
+  localStorage.removeItem('korea_trip_v3'); // 清掉損壞的快取
+  return defaultState();
 }
 
 function saveState(){
@@ -372,6 +374,8 @@ function render(){
 
     let sectionsHTML = '';
     sections.forEach((sec, si) => {
+      if(!sec) return;
+      if(!Array.isArray(sec.spots)) sec.spots = [];
       const spotsHTML = sec.spots.map((spot, spi) => {
         const key = id+'::'+si+'::'+spi;
         const done = state.done[key];
