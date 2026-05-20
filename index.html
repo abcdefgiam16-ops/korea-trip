@@ -144,6 +144,8 @@
     .modal-actions button{padding:10px 16px;font-size:14px;}
   }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -153,6 +155,7 @@
   <div class="header-meta">
     <span><i class="ti ti-home-2" aria-hidden="true"></i> ITDA・弘大</span>
     <span><i class="ti ti-clock" aria-hidden="true"></i> D1 凌晨5:00 仁川落地</span>
+    <span id="sync-status" style="transition:color .3s;color:#bbb;"><i class="ti ti-cloud" aria-hidden="true"></i> 連線中…</span>
   </div>
 </div>
 
@@ -200,6 +203,25 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Firebase 設定（請填入你的設定值）──────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDcooOgQg7PNAKBV1K1RvpQkz64W9ihCdI",
+  authDomain: "korea-8e55e.firebaseapp.com",
+  databaseURL: "https://korea-8e55e-default-rtdb.firebaseio.com",
+  projectId: "korea-8e55e",
+  storageBucket: "korea-8e55e.firebasestorage.app",
+  messagingSenderId: "342400103039",
+  appId: "1:342400103039:web:49a8bd7688bc1f5827c54a"
+};
+// ────────────────────────────────────────────────────────────────────────────
+
+const CLIENT_ID = Date.now().toString(36) + Math.random().toString(36).slice(2);
+let pendingRemoteUpdate = false;
+let noteSaveTimer = null;
+
+firebase.initializeApp(firebaseConfig);
+const tripRef = firebase.database().ref('trip');
+
 const DAYS_DATA = [
   {
     id:'d1', numColor:'#791F1F', numBg:'#FCEBEB',
@@ -289,7 +311,7 @@ const DAYS_DATA = [
   }
 ];
 
-let state = loadState();
+let state = loadCachedState();
 let dragSrc = null;
 let modalMode = null;
 let modalTarget = null;
@@ -308,7 +330,7 @@ function defaultSections(){
   return out;
 }
 
-function loadState(){
+function loadCachedState(){
   try{
     const s = localStorage.getItem('korea_trip_v3');
     if(s){ return JSON.parse(s); }
@@ -326,8 +348,49 @@ function loadState(){
 
 function saveState(){
   if(!state.sections) state.sections = defaultSections();
+  state._client = CLIENT_ID;
+  tripRef.set(state);
   try{ localStorage.setItem('korea_trip_v3', JSON.stringify(state)); }catch(e){}
 }
+
+// Real-time listener: update UI when another device makes changes
+tripRef.on('value', snapshot => {
+  const data = snapshot.val();
+  if(!data){
+    if(!state.sections) state.sections = defaultSections();
+    saveState();
+    return;
+  }
+  if(data._client === CLIENT_ID) return; // our own write, skip re-render
+  state = data;
+  const active = document.activeElement;
+  if(active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')){
+    pendingRemoteUpdate = true; // defer until user finishes typing
+  } else {
+    render();
+  }
+});
+
+// Flush deferred re-render when user leaves an input field
+document.addEventListener('blur', e => {
+  if(pendingRemoteUpdate && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT')){
+    pendingRemoteUpdate = false;
+    setTimeout(render, 50);
+  }
+}, true);
+
+// Connection status indicator
+firebase.database().ref('.info/connected').on('value', snap => {
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  if(snap.val()){
+    el.innerHTML = '<i class="ti ti-cloud-check" aria-hidden="true"></i> 已連線';
+    el.style.color = '#0F6E56';
+  } else {
+    el.innerHTML = '<i class="ti ti-cloud-off" aria-hidden="true"></i> 離線';
+    el.style.color = '#999';
+  }
+});
 
 function getSections(id){
   if(!state.sections) state.sections = defaultSections();
@@ -468,7 +531,8 @@ function renameSpot(id, si, spi){
 
 function saveNote(id, val){
   state.notes[id] = val;
-  saveState();
+  clearTimeout(noteSaveTimer);
+  noteSaveTimer = setTimeout(saveState, 800);
 }
 function autoResize(el){
   el.style.height='auto';
