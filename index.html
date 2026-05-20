@@ -623,8 +623,28 @@ render();
     });
     fbTripRef = firebase.database().ref('trip');
 
+    function fixArrays(data){
+      // Firebase 會把陣列轉成 {0:…,1:…} 物件，這裡轉回來
+      if(!data) return data;
+      if(data.order && !Array.isArray(data.order))
+        data.order = Object.values(data.order);
+      if(data.sections){
+        Object.keys(data.sections).forEach(dayId => {
+          let secs = data.sections[dayId];
+          if(secs && !Array.isArray(secs))
+            secs = data.sections[dayId] = Object.values(secs);
+          if(Array.isArray(secs))
+            secs.forEach(sec => {
+              if(sec && sec.spots && !Array.isArray(sec.spots))
+                sec.spots = Object.values(sec.spots);
+            });
+        });
+      }
+      return data;
+    }
+
     fbTripRef.on('value', snapshot => {
-      const data = snapshot.val();
+      const data = fixArrays(snapshot.val());
       if(!data){ saveState(); return; }
       if(data._client === CLIENT_ID) return;
       state = data;
