@@ -51,7 +51,9 @@
   .day-body{display:none;padding:0 16px 16px;}
   .day-body.open{display:block;}
 
-  .sec-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#aaa;margin:14px 0 8px;}
+  .sec-label{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#aaa;margin:14px 0 8px;display:flex;align-items:center;gap:5px;}
+  .sec-rename-btn{background:none;border:none;cursor:pointer;padding:1px 3px;border-radius:3px;color:#ddd;font-size:11px;line-height:1;display:inline-flex;align-items:center;flex-shrink:0;}
+  .sec-rename-btn:hover{background:#f0eeee;color:#888;}
   .spots{display:flex;flex-wrap:wrap;gap:6px;}
 
   /* spot chip */
@@ -77,6 +79,12 @@
   /* warn */
   .warn-box{margin-top:10px;font-size:12px;color:#791F1F;background:#FCEBEB;border-radius:8px;padding:9px 12px;display:flex;gap:7px;align-items:flex-start;}
   .warn-box i{font-size:14px;flex-shrink:0;margin-top:1px;}
+  .add-warn-btn{margin-top:8px;background:none;border:1.5px dashed #f0d0d0;border-radius:6px;padding:5px 10px;font-size:11px;color:#cdb;cursor:pointer;display:flex;align-items:center;gap:5px;width:100%;color:#d0a0a0;}
+  .add-warn-btn:hover{color:#a04040;border-color:#c08080;background:#fff8f8;}
+  /* box edit btn */
+  .box-edit-btn{flex-shrink:0;margin-left:auto;background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:4px;color:#ccc;font-size:12px;line-height:1;display:inline-flex;align-items:center;align-self:flex-start;margin-top:-1px;}
+  .warn-box .box-edit-btn:hover{background:rgba(120,0,0,.08);color:#791F1F;}
+  .tip-box .box-edit-btn:hover{background:rgba(0,0,0,.06);color:#555;}
 
   /* spot action buttons */
   .spot-wrap{position:relative;display:inline-flex;align-items:center;gap:2px;}
@@ -182,6 +190,7 @@
     <button class="tool-btn" onclick="collapseAll()"><i class="ti ti-chevrons-up"></i> 收合全部</button>
     <button class="tool-btn" onclick="resetDone()"><i class="ti ti-refresh"></i> 重置勾選</button>
     <button class="tool-btn primary" onclick="copyText()"><i class="ti ti-copy"></i> 複製純文字版</button>
+    <button class="tool-btn" onclick="exportSchedule()"><i class="ti ti-calendar-stats"></i> 輸出行程表</button>
   </div>
 
   <div id="days-container"></div>
@@ -317,7 +326,7 @@ function defaultSections(){
 }
 
 function defaultState(){
-  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, open:{} };
+  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, warns:{}, tips:{}, open:{} };
 }
 
 function loadState(){
@@ -390,7 +399,7 @@ function render(){
         </span>`;
       }).join('');
       const sid = `${id}-${si}`;
-      sectionsHTML += `<div class="sec-label">${escHtml(sec.label)}</div><div class="spots" id="spots-${sid}">${spotsHTML}</div>`;
+      sectionsHTML += `<div class="sec-label">${escHtml(sec.label)}<button class="sec-rename-btn" onclick="renameSection('${id}',${si})" title="重新命名分類"><i class="ti ti-pencil"></i></button></div><div class="spots" id="spots-${sid}">${spotsHTML}</div>`;
       sectionsHTML += `<div class="add-spot-row">
         <input class="add-input" placeholder="新增景點…" id="add-input-${sid}" onkeydown="if(event.key==='Enter'){event.preventDefault();addSpot('${id}',${si})}">
         <select class="cat-sel" id="add-type-${sid}">
@@ -403,8 +412,12 @@ function render(){
       </div>`;
     });
 
-    const warnHTML = d.warn ? `<div class="warn-box"><i class="ti ti-alert-triangle"></i><span>${d.warn}</span></div>` : '';
-    const tipHTML = `<div class="tip-box"><i class="ti ti-bulb"></i><span>${d.tip}</span></div>`;
+    const warnText = (state.warns && state.warns[id] !== undefined) ? state.warns[id] : d.warn;
+    const tipText  = (state.tips  && state.tips[id]  !== undefined) ? state.tips[id]  : d.tip;
+    const warnHTML = warnText
+      ? `<div class="warn-box"><i class="ti ti-alert-triangle" style="flex-shrink:0;margin-top:1px;"></i><span style="flex:1;">${escHtml(warnText)}</span><button class="box-edit-btn" onclick="editBoxText('${id}','warn')" title="編輯注意事項"><i class="ti ti-pencil"></i></button></div>`
+      : `<button class="add-warn-btn" onclick="editBoxText('${id}','warn')"><i class="ti ti-alert-triangle"></i> 新增注意事項</button>`;
+    const tipHTML = `<div class="tip-box"><i class="ti ti-bulb" style="flex-shrink:0;margin-top:1px;"></i><span style="flex:1;">${escHtml(tipText)}</span><button class="box-edit-btn" onclick="editBoxText('${id}','tip')" title="編輯小提示"><i class="ti ti-pencil"></i></button></div>`;
     const noteHTML = `<div class="note-row">
       <i class="ti ti-pencil" aria-hidden="true"></i>
       <textarea class="note-input" placeholder="備注…" rows="1"
@@ -483,6 +496,32 @@ function renameSpot(id, si, spi){
   document.getElementById('modal-input').value = old;
   document.getElementById('modal-bg').classList.add('show');
   setTimeout(()=>{ const el=document.getElementById('modal-input'); el.focus(); el.select(); },100);
+}
+
+function renameSection(dayId, si){
+  const sec = getSections(dayId)[si];
+  if(!sec) return;
+  editSpotTarget = {dayId, si};
+  modalMode = 'rename-section';
+  document.getElementById('modal-title').textContent = '重新命名分類';
+  document.getElementById('modal-desc').textContent = '輸入新的分類名稱（例如：上午、晚餐、購物…）';
+  document.getElementById('modal-input').value = sec.label;
+  document.getElementById('modal-bg').classList.add('show');
+  setTimeout(()=>{ const el=document.getElementById('modal-input'); el.focus(); el.select(); },100);
+}
+
+function editBoxText(id, type){
+  const d = getData(id);
+  const cur = type==='warn'
+    ? ((state.warns && state.warns[id] !== undefined) ? state.warns[id] : d.warn)
+    : ((state.tips  && state.tips[id]  !== undefined) ? state.tips[id]  : d.tip);
+  editSpotTarget = {id, boxType: type};
+  modalMode = 'edit-box';
+  document.getElementById('modal-title').textContent = type==='warn' ? '編輯注意事項' : '編輯小提示';
+  document.getElementById('modal-desc').textContent  = type==='warn' ? '修改紅色注意事項（清空則隱藏）' : '修改燈泡小提示';
+  document.getElementById('modal-input').value = cur;
+  document.getElementById('modal-bg').classList.add('show');
+  setTimeout(()=>document.getElementById('modal-input').focus(), 100);
 }
 
 function saveNote(id, val){
@@ -581,6 +620,23 @@ function saveModal(){
       state.open[id]=true;
       saveState(); render();
     }
+  } else if(modalMode==='rename-section' && editSpotTarget){
+    const {dayId,si} = editSpotTarget;
+    const val = document.getElementById('modal-input').value.trim();
+    if(val){
+      getSections(dayId)[si].label = val;
+      state.open[dayId]=true;
+      saveState(); render();
+    }
+  } else if(modalMode==='edit-box' && editSpotTarget){
+    const {id, boxType} = editSpotTarget;
+    const val = document.getElementById('modal-input').value.trim();
+    if(!state.warns) state.warns = {};
+    if(!state.tips)  state.tips  = {};
+    if(boxType==='warn') state.warns[id] = val;
+    else                 state.tips[id]  = val;
+    state.open[id]=true;
+    saveState(); render();
   }
   closeModalDirect();
 }
@@ -598,9 +654,83 @@ function copyText(){
     });
     const note = state.notes[id];
     if(note) out += `📝 ${note}\n`;
+    const warn = (state.warns && state.warns[id] !== undefined) ? state.warns[id] : d.warn;
+    if(warn) out += `⚠️ ${warn}\n`;
     out += '\n';
   });
   navigator.clipboard.writeText(out).then(()=>showToast('已複製純文字版！'));
+}
+
+function exportSchedule(){
+  const order = state.order || DAYS_DATA.map(d=>d.id);
+  const colors = {
+    shop:'background:#EEEDFE;color:#3C3489;border:1px solid #CECBF6;',
+    food:'background:#FAEEDA;color:#633806;border:1px solid #FAC775;',
+    play:'background:#E1F5EE;color:#085041;border:1px solid #9FE1CB;',
+    sight:'background:#FAECE7;color:#712B13;border:1px solid #F5C4B3;'
+  };
+  let daysHTML = '';
+  order.forEach((id, idx) => {
+    const d = getData(id);
+    if(!d) return;
+    const title    = state.titles[id] || d.title;
+    const sub      = state.subs[id]   || d.sub;
+    const note     = (state.notes && state.notes[id]) || '';
+    const warnText = (state.warns && state.warns[id] !== undefined) ? state.warns[id] : d.warn;
+    const tipText  = (state.tips  && state.tips[id]  !== undefined) ? state.tips[id]  : d.tip;
+    const sections = getSections(id);
+    let secsHTML = '';
+    sections.forEach(sec => {
+      if(!sec || !sec.spots || sec.spots.length === 0) return;
+      const cs = colors[sec.type] || colors.sight;
+      secsHTML += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#bbb;margin:10px 0 5px;">${escHtml(sec.label)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">`;
+      sec.spots.forEach(spot => {
+        secsHTML += `<span style="${cs}font-size:12px;padding:3px 10px;border-radius:16px;">${escHtml(spot)}</span>`;
+      });
+      secsHTML += `</div>`;
+    });
+    daysHTML += `
+    <div style="margin-bottom:14px;border:1px solid #e8e6e0;border-radius:10px;overflow:hidden;page-break-inside:avoid;">
+      <div style="background:${d.numBg};padding:11px 16px;display:flex;align-items:center;gap:12px;">
+        <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${d.numColor};border:2px solid ${d.numColor};flex-shrink:0;">D${idx+1}</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#1a1a1a;">${escHtml(title)}</div>
+          <div style="font-size:12px;color:#666;margin-top:2px;">${escHtml(sub)}</div>
+        </div>
+      </div>
+      <div style="padding:12px 16px;">
+        ${secsHTML}
+        ${note     ? `<div style="margin-top:10px;font-size:12px;color:#555;background:#f5f4f0;border-radius:6px;padding:7px 10px;">📝 ${escHtml(note)}</div>` : ''}
+        ${warnText ? `<div style="margin-top:8px;font-size:12px;color:#791F1F;background:#FCEBEB;border-radius:6px;padding:7px 10px;">⚠️ ${escHtml(warnText)}</div>` : ''}
+        ${tipText  ? `<div style="margin-top:8px;font-size:12px;color:#666;background:#fafaf8;border-radius:6px;padding:7px 10px;">💡 ${escHtml(tipText)}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  const html = `<!DOCTYPE html>
+<html lang="zh-TW"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>韓國行程表</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,'Noto Sans TC',sans-serif;color:#1a1a1a;padding:24px;max-width:760px;margin:0 auto;}
+  @media print{.no-print{display:none!important;}@page{margin:12mm;}}
+  .print-btn{position:fixed;bottom:24px;right:24px;background:#534AB7;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:14px;cursor:pointer;box-shadow:0 2px 12px rgba(83,74,183,.35);}
+  .print-btn:hover{background:#3C3489;}
+</style>
+</head>
+<body>
+<div style="margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #e8e6e0;">
+  <div style="font-size:22px;font-weight:700;margin-bottom:4px;">🇰🇷 韓國 7 天 6 夜行程</div>
+  <div style="font-size:13px;color:#888;">住宿：ITDA・弘大</div>
+</div>
+${daysHTML}
+<div style="height:80px;" class="no-print"></div>
+<button class="print-btn no-print" onclick="window.print()">🖨️ 列印 / 儲存 PDF</button>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { showToast('請允許瀏覽器彈出視窗後再試'); }
 }
 
 function showToast(msg){
