@@ -125,6 +125,8 @@
   .modal p{font-size:13px;color:#888;margin-bottom:16px;}
   .modal textarea{width:100%;border:1px solid #e8e6e0;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;min-height:120px;color:#1a1a1a;}
   .modal textarea:focus{outline:none;border-color:#7F77DD;}
+  .modal input[type="time"]{border:1px solid #e8e6e0;border-radius:8px;padding:9px 10px;font-size:15px;color:#1a1a1a;background:#fafaf8;width:100%;}
+  .modal input[type="time"]:focus{outline:none;border-color:#7F77DD;background:#fff;}
   .modal-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;}
   .modal-actions button{border:1px solid #e8e6e0;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;background:#fff;color:#555;}
   .modal-actions .ok-btn{background:#534AB7;color:#fff;border-color:#534AB7;}
@@ -151,6 +153,10 @@
   .tl-chip.drop-before{border-left:3px solid #534AB7!important;padding-left:8px;}
   .tl-chip.drop-after{border-right:3px solid #534AB7!important;padding-right:8px;}
   .tl-empty{font-size:12px;color:#ccc;font-style:italic;}
+  .tl-time-badge{margin-left:3px;font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.08);color:#888;cursor:pointer;white-space:nowrap;flex-shrink:0;line-height:1.7;transition:background .15s,color .15s;}
+  .tl-time-badge:hover{background:rgba(83,74,183,.14);color:#534AB7;}
+  .tl-time-badge.no-time{background:transparent;color:#ccc;}
+  .tl-time-badge.no-time:hover{background:rgba(83,74,183,.1);color:#534AB7;}
   .timetable-footer{margin-top:14px;display:flex;justify-content:flex-end;}
 
   @media(max-width:600px){
@@ -238,8 +244,17 @@
     <h3 id="modal-title">編輯行程標題</h3>
     <p id="modal-desc">修改這一天的主題或副標題</p>
     <textarea id="modal-input"></textarea>
+    <div id="modal-time-wrap" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+        <input type="time" id="modal-time-start">
+        <span style="color:#aaa;font-size:16px;">–</span>
+        <input type="time" id="modal-time-end">
+      </div>
+      <p style="font-size:12px;color:#bbb;margin-top:8px;">結束時間可以留空</p>
+    </div>
     <div class="modal-actions">
       <button onclick="closeModalDirect()">取消</button>
+      <button id="modal-clear-btn" style="display:none;color:#a04040;" onclick="clearSpotTime()">清除時間</button>
       <button class="ok-btn" onclick="saveModal()">儲存</button>
     </div>
   </div>
@@ -363,7 +378,7 @@ function defaultSections(){
 }
 
 function defaultState(){
-  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, warns:{}, tips:{}, timelineOrder:{}, open:{} };
+  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, warns:{}, tips:{}, timelineOrder:{}, spotTimes:{}, open:{} };
 }
 
 function loadState(){
@@ -642,7 +657,13 @@ function openEditModal(id){
   document.getElementById('modal-bg').classList.add('show');
 }
 function closeModal(e){ if(e.target===document.getElementById('modal-bg')) closeModalDirect(); }
-function closeModalDirect(){ document.getElementById('modal-bg').classList.remove('show'); modalMode=null; editSpotTarget=null; }
+function closeModalDirect(){
+  document.getElementById('modal-bg').classList.remove('show');
+  document.getElementById('modal-input').style.display = '';
+  document.getElementById('modal-time-wrap').style.display = 'none';
+  document.getElementById('modal-clear-btn').style.display = 'none';
+  modalMode=null; editSpotTarget=null;
+}
 function saveModal(){
   if(modalMode==='edit'){
     const lines = document.getElementById('modal-input').value.split('\n');
@@ -666,6 +687,15 @@ function saveModal(){
       state.open[dayId]=true;
       saveState(); render();
     }
+  } else if(modalMode==='edit-time' && editSpotTarget){
+    const {dayId, spotName} = editSpotTarget;
+    const key = dayId + '::' + spotName;
+    const start = document.getElementById('modal-time-start').value;
+    const end   = document.getElementById('modal-time-end').value;
+    if(!state.spotTimes) state.spotTimes = {};
+    if(start || end) state.spotTimes[key] = {start, end};
+    else delete state.spotTimes[key];
+    saveState(); renderTimeline();
   } else if(modalMode==='edit-box' && editSpotTarget){
     const {id, boxType} = editSpotTarget;
     const val = document.getElementById('modal-input').value.trim();
@@ -771,6 +801,31 @@ ${daysHTML}
   else { showToast('請允許瀏覽器彈出視窗後再試'); }
 }
 
+function editSpotTime(dayId, spotName){
+  editSpotTarget = {dayId, spotName};
+  modalMode = 'edit-time';
+  document.getElementById('modal-title').textContent = '設定時間';
+  document.getElementById('modal-desc').textContent = spotName;
+  document.getElementById('modal-input').style.display = 'none';
+  document.getElementById('modal-time-wrap').style.display = 'block';
+  document.getElementById('modal-clear-btn').style.display = '';
+  const key = dayId + '::' + spotName;
+  const t = state.spotTimes && state.spotTimes[key];
+  document.getElementById('modal-time-start').value = t ? (t.start||'') : '';
+  document.getElementById('modal-time-end').value   = t ? (t.end||'')   : '';
+  document.getElementById('modal-bg').classList.add('show');
+  setTimeout(()=>document.getElementById('modal-time-start').focus(), 100);
+}
+
+function clearSpotTime(){
+  if(!editSpotTarget) return;
+  const {dayId, spotName} = editSpotTarget;
+  const key = dayId + '::' + spotName;
+  if(state.spotTimes) delete state.spotTimes[key];
+  saveState(); renderTimeline();
+  closeModalDirect();
+}
+
 // ── Timeline helpers ──────────────────────────────────────────
 function getTimelineOrder(dayId){
   if(!state.timelineOrder) state.timelineOrder = {};
@@ -830,7 +885,16 @@ function renderTimeline(){
         chip.draggable = true;
         chip.dataset.dayId = id;
         chip.dataset.idx = i;
-        chip.innerHTML = `<span class="tl-num">${i+1}</span><i class="ti ${info.icon}"></i><span>${escHtml(name)}</span>`;
+        const tk = id + '::' + name;
+        const td = state.spotTimes && state.spotTimes[tk];
+        const tStr = td ? (td.start + (td.end ? '–'+td.end : '')) : '';
+        chip.innerHTML = `<span class="tl-num">${i+1}</span><i class="ti ${info.icon}"></i><span>${escHtml(name)}</span><span class="tl-time-badge${tStr?'':' no-time'}">${tStr ? escHtml(tStr) : '<i class="ti ti-clock-plus"></i>'}</span>`;
+
+        const timeBadge = chip.querySelector('.tl-time-badge');
+        if(timeBadge){
+          timeBadge.draggable = false;
+          timeBadge.addEventListener('click', e => { e.stopPropagation(); editSpotTime(id, name); });
+        }
 
         chip.addEventListener('dragstart', e => {
           tlDragSrc = {dayId:id, idx:i, name};
@@ -903,8 +967,12 @@ function exportTimeline(){
     let listHTML = '';
     spotOrder.forEach((name, i) => {
       const cs = colMap[(spotInfo[name]||{type:'sight'}).type] || colMap.sight;
+      const tk = id + '::' + name;
+      const td = state.spotTimes && state.spotTimes[tk];
+      const tStr = td ? (td.start + (td.end ? '–'+td.end : '')) : '';
       listHTML += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f5f4f0;">
         <div style="width:22px;height:22px;border-radius:50%;background:#534AB7;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+        <span style="font-size:11px;color:#999;white-space:nowrap;min-width:88px;">${tStr ? escHtml(tStr) : ''}</span>
         <span style="${cs}font-size:13px;padding:4px 12px;border-radius:16px;">${escHtml(name)}</span>
       </div>`;
     });
