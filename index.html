@@ -134,6 +134,30 @@
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:200;}
   .toast.show{opacity:1;}
 
+  /* ── timetable ── */
+  .timetable-section{margin-top:32px;padding-top:24px;border-top:2px solid #e8e6e0;}
+  .timetable-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+  .timetable-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;color:#1a1a1a;}
+  .timetable-hint{font-size:12px;color:#bbb;}
+  .tl-row{display:flex;align-items:flex-start;border:1px solid #e8e6e0;border-radius:10px;margin-bottom:8px;background:#fff;overflow:hidden;}
+  .tl-day-label{padding:10px 12px;display:flex;flex-direction:column;align-items:center;gap:5px;background:#fafaf8;border-right:1px solid #e8e6e0;min-width:64px;flex-shrink:0;}
+  .tl-day-name{font-size:10px;color:#aaa;text-align:center;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tl-spots{flex:1;padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:50px;}
+  .tl-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border-radius:20px;cursor:grab;border:1.5px solid transparent;user-select:none;transition:opacity .15s;}
+  .tl-chip:active{cursor:grabbing;}
+  .tl-chip i{font-size:13px;}
+  .tl-num{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.13);font-size:9px;font-weight:700;flex-shrink:0;}
+  .tl-chip.tl-dragging{opacity:.3;}
+  .tl-chip.drop-before{border-left:3px solid #534AB7!important;padding-left:8px;}
+  .tl-chip.drop-after{border-right:3px solid #534AB7!important;padding-right:8px;}
+  .tl-empty{font-size:12px;color:#ccc;font-style:italic;}
+  .timetable-footer{margin-top:14px;display:flex;justify-content:flex-end;}
+
+  @media(max-width:600px){
+    .tl-day-label{min-width:50px;padding:8px 8px;}
+    .tl-chip{font-size:11px;padding:3px 8px;}
+  }
+
   @media(max-width:600px){
     .day-title{font-size:14px;}
     .day-sub{font-size:11px;}
@@ -194,6 +218,18 @@
   </div>
 
   <div id="days-container"></div>
+
+  <!-- 時間表 -->
+  <div class="timetable-section">
+    <div class="timetable-header">
+      <div class="timetable-title"><i class="ti ti-calendar-week"></i> 行程時間表</div>
+      <span class="timetable-hint">拖曳方塊調整當天先後順序</span>
+    </div>
+    <div id="timetable-grid"></div>
+    <div class="timetable-footer">
+      <button class="tool-btn primary" onclick="exportTimeline()"><i class="ti ti-file-export"></i> 輸出時間表</button>
+    </div>
+  </div>
 </div>
 
 <!-- modal -->
@@ -311,6 +347,7 @@ let dragSrc = null;
 let modalMode = null;
 let modalTarget = null;
 let editSpotTarget = null;
+let tlDragSrc = null;
 
 function defaultSections(){
   const out = {};
@@ -326,7 +363,7 @@ function defaultSections(){
 }
 
 function defaultState(){
-  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, warns:{}, tips:{}, open:{} };
+  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, warns:{}, tips:{}, timelineOrder:{}, open:{} };
 }
 
 function loadState(){
@@ -457,6 +494,7 @@ function render(){
     container.appendChild(card);
   });
   updateProgress();
+  renderTimeline();
 }
 
 function toggleDay(id){
@@ -722,6 +760,185 @@ function exportSchedule(){
 <body>
 <div style="margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #e8e6e0;">
   <div style="font-size:22px;font-weight:700;margin-bottom:4px;">🇰🇷 韓國 7 天 6 夜行程</div>
+  <div style="font-size:13px;color:#888;">住宿：ITDA・弘大</div>
+</div>
+${daysHTML}
+<div style="height:80px;" class="no-print"></div>
+<button class="print-btn no-print" onclick="window.print()">🖨️ 列印 / 儲存 PDF</button>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { showToast('請允許瀏覽器彈出視窗後再試'); }
+}
+
+// ── Timeline helpers ──────────────────────────────────────────
+function getTimelineOrder(dayId){
+  if(!state.timelineOrder) state.timelineOrder = {};
+  const sections = getSections(dayId);
+  const allSpots = [];
+  sections.forEach(sec => {
+    if(!sec || !Array.isArray(sec.spots)) return;
+    sec.spots.forEach(name => allSpots.push(name));
+  });
+  const saved = state.timelineOrder[dayId];
+  if(!saved || saved.length === 0) return allSpots;
+  const result = [];
+  const remaining = [...allSpots];
+  saved.forEach(name => {
+    const idx = remaining.indexOf(name);
+    if(idx >= 0){ result.push(name); remaining.splice(idx,1); }
+  });
+  remaining.forEach(n => result.push(n));
+  return result;
+}
+
+function renderTimeline(){
+  const grid = document.getElementById('timetable-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const order = state.order || DAYS_DATA.map(d=>d.id);
+  order.forEach((id, idx) => {
+    const d = getData(id);
+    if(!d) return;
+    const title = state.titles[id] || d.title;
+    const sections = getSections(id);
+    const spotOrder = getTimelineOrder(id);
+    const spotInfo = {};
+    sections.forEach(sec => {
+      if(!sec || !Array.isArray(sec.spots)) return;
+      sec.spots.forEach(name => { if(!spotInfo[name]) spotInfo[name] = {type:sec.type, icon:sec.icon}; });
+    });
+
+    const row = document.createElement('div');
+    row.className = 'tl-row';
+
+    const label = document.createElement('div');
+    label.className = 'tl-day-label';
+    label.innerHTML = `<div class="day-num" style="width:28px;height:28px;font-size:11px;background:${d.numBg};color:${d.numColor};">D${idx+1}</div><div class="tl-day-name">${escHtml(title.replace(/・.*/,''))}</div>`;
+    row.appendChild(label);
+
+    const spotsDiv = document.createElement('div');
+    spotsDiv.className = 'tl-spots';
+
+    if(spotOrder.length === 0){
+      spotsDiv.innerHTML = '<span class="tl-empty">展開上方卡片新增景點</span>';
+    } else {
+      spotOrder.forEach((name, i) => {
+        const info = spotInfo[name] || {type:'sight', icon:'ti-building-arch'};
+        const chip = document.createElement('div');
+        chip.className = `tl-chip spot-${info.type}`;
+        chip.draggable = true;
+        chip.dataset.dayId = id;
+        chip.dataset.idx = i;
+        chip.innerHTML = `<span class="tl-num">${i+1}</span><i class="ti ${info.icon}"></i><span>${escHtml(name)}</span>`;
+
+        chip.addEventListener('dragstart', e => {
+          tlDragSrc = {dayId:id, idx:i, name};
+          chip.classList.add('tl-dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.stopPropagation();
+        });
+        chip.addEventListener('dragend', () => {
+          chip.classList.remove('tl-dragging');
+          document.querySelectorAll('.tl-chip').forEach(c => c.classList.remove('drop-before','drop-after'));
+        });
+        chip.addEventListener('dragover', e => {
+          e.preventDefault(); e.stopPropagation();
+          if(!tlDragSrc || tlDragSrc.dayId !== id) return;
+          document.querySelectorAll(`[data-day-id="${id}"].tl-chip`).forEach(c => c.classList.remove('drop-before','drop-after'));
+          const rect = chip.getBoundingClientRect();
+          chip.classList.add(e.clientX < rect.left + rect.width/2 ? 'drop-before' : 'drop-after');
+        });
+        chip.addEventListener('dragleave', () => chip.classList.remove('drop-before','drop-after'));
+        chip.addEventListener('drop', e => {
+          e.preventDefault(); e.stopPropagation();
+          chip.classList.remove('drop-before','drop-after');
+          if(!tlDragSrc || tlDragSrc.dayId !== id || tlDragSrc.idx === i) return;
+          const rect = chip.getBoundingClientRect();
+          const insertBefore = e.clientX < rect.left + rect.width/2;
+          const current = getTimelineOrder(id);
+          const from = tlDragSrc.idx, to = i;
+          const [moved] = current.splice(from, 1);
+          let at = to;
+          if(from < to && insertBefore) at = to - 1;
+          if(from > to && !insertBefore) at = to + 1;
+          current.splice(Math.max(0, Math.min(at, current.length)), 0, moved);
+          if(!state.timelineOrder) state.timelineOrder = {};
+          state.timelineOrder[id] = current;
+          tlDragSrc = null;
+          saveState(); renderTimeline();
+        });
+
+        spotsDiv.appendChild(chip);
+      });
+    }
+    row.appendChild(spotsDiv);
+    grid.appendChild(row);
+  });
+}
+
+function exportTimeline(){
+  const order = state.order || DAYS_DATA.map(d=>d.id);
+  const colMap = {
+    shop:'background:#EEEDFE;color:#3C3489;',
+    food:'background:#FAEEDA;color:#633806;',
+    play:'background:#E1F5EE;color:#085041;',
+    sight:'background:#FAECE7;color:#712B13;'
+  };
+  let daysHTML = '';
+  order.forEach((id, idx) => {
+    const d = getData(id);
+    if(!d) return;
+    const title    = state.titles[id] || d.title;
+    const sub      = state.subs[id]   || d.sub;
+    const note     = (state.notes  && state.notes[id])  || '';
+    const warnText = (state.warns  && state.warns[id]  !== undefined) ? state.warns[id]  : d.warn;
+    const sections = getSections(id);
+    const spotOrder = getTimelineOrder(id);
+    const spotInfo = {};
+    sections.forEach(sec => {
+      if(!sec || !Array.isArray(sec.spots)) return;
+      sec.spots.forEach(name => { if(!spotInfo[name]) spotInfo[name] = {type:sec.type}; });
+    });
+    let listHTML = '';
+    spotOrder.forEach((name, i) => {
+      const cs = colMap[(spotInfo[name]||{type:'sight'}).type] || colMap.sight;
+      listHTML += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f5f4f0;">
+        <div style="width:22px;height:22px;border-radius:50%;background:#534AB7;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+        <span style="${cs}font-size:13px;padding:4px 12px;border-radius:16px;">${escHtml(name)}</span>
+      </div>`;
+    });
+    if(spotOrder.length === 0) listHTML = '<div style="font-size:12px;color:#ccc;padding:8px 0;">尚無景點</div>';
+    daysHTML += `<div style="margin-bottom:14px;border:1px solid #e8e6e0;border-radius:10px;overflow:hidden;page-break-inside:avoid;">
+      <div style="padding:12px 16px;background:${d.numBg};display:flex;align-items:center;gap:12px;">
+        <div style="width:30px;height:30px;border-radius:50%;border:2px solid ${d.numColor};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${d.numColor};flex-shrink:0;">D${idx+1}</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#1a1a1a;">${escHtml(title)}</div>
+          <div style="font-size:12px;color:#666;margin-top:2px;">${escHtml(sub)}</div>
+        </div>
+      </div>
+      <div style="padding:8px 16px;">
+        ${listHTML}
+        ${note     ? `<div style="margin-top:8px;font-size:12px;color:#555;background:#f5f4f0;border-radius:6px;padding:7px 10px;">📝 ${escHtml(note)}</div>` : ''}
+        ${warnText ? `<div style="margin-top:8px;font-size:12px;color:#791F1F;background:#FCEBEB;border-radius:6px;padding:7px 10px;">⚠️ ${escHtml(warnText)}</div>` : ''}
+      </div>
+    </div>`;
+  });
+  const html = `<!DOCTYPE html>
+<html lang="zh-TW"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>韓國行程時間表</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,'Noto Sans TC',sans-serif;color:#1a1a1a;padding:24px;max-width:700px;margin:0 auto;}
+  @media print{.no-print{display:none!important;}@page{margin:12mm;}}
+  .print-btn{position:fixed;bottom:24px;right:24px;background:#534AB7;color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:14px;cursor:pointer;box-shadow:0 2px 12px rgba(83,74,183,.35);}
+  .print-btn:hover{background:#3C3489;}
+</style>
+</head>
+<body>
+<div style="margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #e8e6e0;">
+  <div style="font-size:22px;font-weight:700;margin-bottom:4px;">🇰🇷 韓國行程時間表</div>
   <div style="font-size:13px;color:#888;">住宿：ITDA・弘大</div>
 </div>
 ${daysHTML}
