@@ -221,6 +221,11 @@
     <button class="tool-btn" onclick="resetDone()"><i class="ti ti-refresh"></i> 重置勾選</button>
     <button class="tool-btn primary" onclick="copyText()"><i class="ti ti-copy"></i> 複製純文字版</button>
     <button class="tool-btn" onclick="exportSchedule()"><i class="ti ti-calendar-stats"></i> 輸出行程表</button>
+    <button class="tool-btn" style="margin-left:auto;" onclick="shareLink()"><i class="ti ti-share-2"></i> 分享給旅伴</button>
+  </div>
+  <div id="online-bar" style="display:none;margin-bottom:12px;font-size:12px;color:#888;display:flex;align-items:center;gap:6px;">
+    <span id="online-dots" style="display:flex;gap:4px;"></span>
+    <span id="online-text"></span>
   </div>
 
   <div id="days-container"></div>
@@ -1024,6 +1029,17 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2200);
 }
 
+function shareLink(){
+  const url = window.location.href.split('?')[0].split('#')[0];
+  if(navigator.share){
+    navigator.share({ title:'韓國 7 天 6 夜行程', url }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(url)
+      .then(()=>showToast('已複製分享連結，傳給旅伴就能一起編輯 ✈️'))
+      .catch(()=>{ prompt('複製以下連結分享給旅伴：', url); });
+  }
+}
+
 if(!state.order){ state.order = DAYS_DATA.map(d=>d.id); }
 if(!state.sections){ state.sections = defaultSections(); }
 render();
@@ -1065,8 +1081,32 @@ render();
     firebase.database().ref('.info/connected').on('value', snap => {
       const el = document.getElementById('sync-status');
       if(!el) return;
-      if(snap.val()){ el.innerHTML='<i class="ti ti-cloud-check"></i> 已連線'; el.style.color='#0F6E56'; }
-      else { el.innerHTML='<i class="ti ti-cloud-off"></i> 離線'; el.style.color='#999'; }
+      if(snap.val()){
+        el.innerHTML='<i class="ti ti-cloud-check"></i> 已連線'; el.style.color='#0F6E56';
+        // 登記自己在線，斷線時自動移除
+        const presRef = firebase.database().ref('presence/' + CLIENT_ID);
+        presRef.set({ ts: Date.now() });
+        presRef.onDisconnect().remove();
+      } else {
+        el.innerHTML='<i class="ti ti-cloud-off"></i> 離線'; el.style.color='#999';
+      }
+    });
+
+    // 監聽在線人數
+    firebase.database().ref('presence').on('value', snap => {
+      const bar   = document.getElementById('online-bar');
+      const dots  = document.getElementById('online-dots');
+      const text  = document.getElementById('online-text');
+      if(!bar || !dots || !text) return;
+      const data = snap.val() || {};
+      const count = Object.keys(data).length;
+      if(count <= 1){ bar.style.display='none'; return; }
+      bar.style.display='flex';
+      dots.innerHTML = Object.keys(data).map((_,i)=>{
+        const colors=['#534AB7','#0F6E56','#185FA5','#854F0B','#791F1F'];
+        return `<span style="width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};display:inline-block;"></span>`;
+      }).join('');
+      text.textContent = `目前 ${count} 人同時在線，正在一起規劃行程 ✈️`;
     });
   } catch(e){
     const el = document.getElementById('sync-status');
