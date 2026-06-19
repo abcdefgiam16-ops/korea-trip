@@ -93,7 +93,16 @@
   .spot-act-btn{background:none;border:none;cursor:pointer;padding:3px 4px;border-radius:4px;color:#bbb;font-size:13px;line-height:1;display:flex;align-items:center;}
   .spot-act-btn:hover{background:#f0eeee;color:#555;}
   .spot-act-btn.del:hover{background:#FCEBEB;color:#791F1F;}
+  .spot-act-btn.map-btn.has-map{color:#185FA5;}
+  .spot-act-btn.map-btn.has-map:hover{background:#E6F1FB;color:#185FA5;}
   @media(hover:none){.spot-actions{display:inline-flex;}}
+  /* map open btn in modal */
+  .modal-open-map-btn{color:#185FA5!important;border-color:#185FA5!important;}
+  .modal-open-map-btn:hover{background:#E6F1FB!important;}
+  /* map link indicator on timeline chip */
+  .tl-map-btn{margin-left:3px;font-size:11px;padding:1px 5px;border-radius:8px;background:transparent;color:#ccc;cursor:pointer;border:none;line-height:1.7;transition:background .15s,color .15s;flex-shrink:0;}
+  .tl-map-btn:hover{background:#E6F1FB;color:#185FA5;}
+  .tl-map-btn.has-map{color:#185FA5;}
 
   /* add-spot */
   .add-spot-row{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
@@ -259,7 +268,8 @@
     </div>
     <div class="modal-actions">
       <button onclick="closeModalDirect()">取消</button>
-      <button id="modal-clear-btn" style="display:none;color:#a04040;" onclick="clearSpotTime()">清除時間</button>
+      <button id="modal-clear-btn" style="display:none;color:#a04040;" onclick="clearModalExtra()">清除</button>
+      <button id="modal-map-open-btn" class="modal-open-map-btn" style="display:none;" onclick="openCurrentMapLink()"><i class="ti ti-navigation"></i> 開啟導航</button>
       <button class="ok-btn" onclick="saveModal()">儲存</button>
     </div>
   </div>
@@ -383,7 +393,7 @@ function defaultSections(){
 }
 
 function defaultState(){
-  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, warns:{}, tips:{}, timelineOrder:{}, spotTimes:{}, open:{} };
+  return { order: DAYS_DATA.map(d=>d.id), sections: defaultSections(), done:{}, notes:{}, titles:{}, subs:{}, warns:{}, tips:{}, timelineOrder:{}, spotTimes:{}, mapLinks:{}, open:{} };
 }
 
 function loadState(){
@@ -445,12 +455,18 @@ function render(){
       const spotsHTML = sec.spots.map((spot, spi) => {
         const key = id+'::'+si+'::'+spi;
         const done = state.done[key];
+        const mapKey = id+'::'+spot;
+        const mapUrl = state.mapLinks && state.mapLinks[mapKey];
+        const mapBtnClass = 'spot-act-btn map-btn' + (mapUrl ? ' has-map' : '');
+        const mapBtnTitle = mapUrl ? '已設定導航・點擊修改' : '新增地圖導航連結';
+        const mapBtnIcon = mapUrl ? 'ti-navigation' : 'ti-map-pin-plus';
         return `<span class="spot-wrap" style="display:inline-flex;align-items:center;gap:2px;">
           <span class="spot spot-${sec.type}${done?' done':''}" onclick="toggleSpot('${id}',${si},${spi},this)">
             <i class="ti ${sec.icon}" aria-hidden="true"></i>${escHtml(spot)}
           </span>
           <span class="spot-actions">
             <button class="spot-act-btn" title="重新命名" onclick="renameSpot('${id}',${si},${spi})"><i class="ti ti-pencil"></i></button>
+            <button class="${mapBtnClass}" title="${mapBtnTitle}" onclick="editMapLink('${escAttr(id)}','${escAttr(spot)}')"><i class="ti ${mapBtnIcon}"></i></button>
             <button class="spot-act-btn del" title="刪除" onclick="deleteSpot('${id}',${si},${spi})"><i class="ti ti-x"></i></button>
           </span>
         </span>`;
@@ -665,8 +681,10 @@ function closeModal(e){ if(e.target===document.getElementById('modal-bg')) close
 function closeModalDirect(){
   document.getElementById('modal-bg').classList.remove('show');
   document.getElementById('modal-input').style.display = '';
+  document.getElementById('modal-input').placeholder = '';
   document.getElementById('modal-time-wrap').style.display = 'none';
   document.getElementById('modal-clear-btn').style.display = 'none';
+  document.getElementById('modal-map-open-btn').style.display = 'none';
   modalMode=null; editSpotTarget=null;
 }
 function saveModal(){
@@ -709,6 +727,14 @@ function saveModal(){
     if(boxType==='warn') state.warns[id] = val;
     else                 state.tips[id]  = val;
     state.open[id]=true;
+    saveState(); render();
+  } else if(modalMode==='edit-map' && editSpotTarget){
+    const {dayId, spotName} = editSpotTarget;
+    const val = document.getElementById('modal-input').value.trim();
+    if(!state.mapLinks) state.mapLinks = {};
+    const key = dayId + '::' + spotName;
+    if(val) state.mapLinks[key] = val;
+    else delete state.mapLinks[key];
     saveState(); render();
   }
   closeModalDirect();
@@ -831,6 +857,42 @@ function clearSpotTime(){
   closeModalDirect();
 }
 
+function clearModalExtra(){
+  if(modalMode === 'edit-time') clearSpotTime();
+  else if(modalMode === 'edit-map') clearMapLink();
+}
+
+function editMapLink(dayId, spotName){
+  editSpotTarget = {dayId, spotName};
+  modalMode = 'edit-map';
+  document.getElementById('modal-title').textContent = '地圖導航連結';
+  document.getElementById('modal-desc').textContent = spotName;
+  document.getElementById('modal-input').style.display = '';
+  document.getElementById('modal-input').placeholder = '貼上 Google Maps 或 Apple Maps 連結…';
+  document.getElementById('modal-time-wrap').style.display = 'none';
+  const key = dayId + '::' + spotName;
+  const url = (state.mapLinks && state.mapLinks[key]) || '';
+  document.getElementById('modal-input').value = url;
+  document.getElementById('modal-clear-btn').style.display = url ? '' : 'none';
+  document.getElementById('modal-map-open-btn').style.display = url ? '' : 'none';
+  document.getElementById('modal-bg').classList.add('show');
+  setTimeout(()=>document.getElementById('modal-input').focus(), 100);
+}
+
+function clearMapLink(){
+  if(!editSpotTarget) return;
+  const {dayId, spotName} = editSpotTarget;
+  const key = dayId + '::' + spotName;
+  if(state.mapLinks) delete state.mapLinks[key];
+  saveState(); render();
+  closeModalDirect();
+}
+
+function openCurrentMapLink(){
+  const url = document.getElementById('modal-input').value.trim();
+  if(url) window.open(url, '_blank');
+}
+
 // ── Timeline helpers ──────────────────────────────────────────
 function getTimelineOrder(dayId){
   if(!state.timelineOrder) state.timelineOrder = {};
@@ -893,12 +955,23 @@ function renderTimeline(){
         const tk = id + '::' + name;
         const td = state.spotTimes && state.spotTimes[tk];
         const tStr = td ? (td.start + (td.end ? '–'+td.end : '')) : '';
-        chip.innerHTML = `<span class="tl-num">${i+1}</span><i class="ti ${info.icon}"></i><span>${escHtml(name)}</span><span class="tl-time-badge${tStr?'':' no-time'}">${tStr ? escHtml(tStr) : '<i class="ti ti-clock-plus"></i>'}</span>`;
+        const mk = id + '::' + name;
+        const mapUrl = state.mapLinks && state.mapLinks[mk];
+        const mapBtnHTML = `<button class="tl-map-btn${mapUrl?' has-map':''}" title="${mapUrl?'開啟導航':'尚未設定導航連結'}" draggable="false"><i class="ti ${mapUrl?'ti-navigation':'ti-map-pin-off'}"></i></button>`;
+        chip.innerHTML = `<span class="tl-num">${i+1}</span><i class="ti ${info.icon}"></i><span>${escHtml(name)}</span><span class="tl-time-badge${tStr?'':' no-time'}">${tStr ? escHtml(tStr) : '<i class="ti ti-clock-plus"></i>'}</span>${mapBtnHTML}`;
 
         const timeBadge = chip.querySelector('.tl-time-badge');
         if(timeBadge){
           timeBadge.draggable = false;
           timeBadge.addEventListener('click', e => { e.stopPropagation(); editSpotTime(id, name); });
+        }
+        const mapBtn = chip.querySelector('.tl-map-btn');
+        if(mapBtn){
+          mapBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            if(mapUrl) window.open(mapUrl, '_blank');
+            else editMapLink(id, name);
+          });
         }
 
         chip.addEventListener('dragstart', e => {
